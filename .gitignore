@@ -44,3 +44,6 @@ next-env.d.ts
 # service account keys: never commit
 *firebase-adminsdk*.json
 service-account*.json
+
+# local throwaway scripts
+scripts/.*
