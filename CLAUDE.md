@@ -9,7 +9,9 @@
 - โดเมนยังไม่ได้เลือก ให้ถามเจ้าของก่อนตั้งค่า `metadataBase`, canonical และ sitemap
 
 ไฟล์นี้สรุปบริบทและข้อตกลงของโปรเจกต์ เพื่อให้ Claude Code ทำงานต่อได้โดยไม่ต้องถามซ้ำ
-สถานะปัจจุบัน (2026-11-17): **Phase 3 เสร็จ** (แจ้งเตือนเมื่อพระเข้ารัศมีบ้าน ครั้งเดียวต่อรอบ) ถัดไป Phase 4
+สถานะปัจจุบัน (2026-11-17): **Phase 1–4 เสร็จครบตามแผน** ถัดไป: ทดสอบเดินจริงกับวัด, แยก project production
+Phase 4 เสร็จ (หน้า `/manage`: ประกาศงดบิณฑบาต, จัดการสาย, คนของวัด, แก้ข้อมูลวัด; ลืมรหัสผ่าน)
+Phase 3 เสร็จ (แจ้งเตือนเมื่อพระเข้ารัศมีบ้าน ครั้งเดียวต่อรอบ)
 Phase 2 เสร็จ (PWA, ปักหมุดบ้าน, เปิดแจ้งเตือน, หน้าสอน iPhone)
 Phase 1 deploy แล้ว ที่ https://wat--watweb-33601.asia-southeast1.hosted.app
 (project `watweb-33601` เป็น dev มีข้อมูลทดสอบ) ทดสอบ flow ครบผ่าน Chrome แล้ว
@@ -30,6 +32,9 @@ Phase 1 deploy แล้ว ที่ https://wat--watweb-33601.asia-southeast1.
 - ทดสอบ push อัตโนมัติด้วย Chrome ที่ Playwright สั่งไม่ได้ (subscribe ค้าง) ต้องทดสอบบนมือถือจริง
 - Phase 3: `src/modules/alms/notify.ts` เก็บรายการบ้านต่อสายใน memory 60 วินาที เพื่อไม่ให้อ่าน Firestore ทุกครั้งที่ส่งพิกัด
   การทดสอบที่ส่ง push ให้ใช้ "วัดทดสอบของ Claude" เสมอ วัดนิคมกิตติยารามมีอุปกรณ์จริงของเจ้าของลงทะเบียนอยู่
+- Phase 4: สมาชิกวัดเพิ่มด้วยอีเมล ถ้ายังไม่มีบัญชีระบบสร้างให้และแสดงรหัสผ่านครั้งเดียว (`src/modules/core/auth/members.ts`)
+  ต้องมีแอดมินอย่างน้อย 1 คนเสมอ, นำออกแล้วสิทธิ์หมดภายใน 1 ชม. (token refresh)
+  ลบสายแล้วบ้านในสายนั้นย้ายไปสายอื่น, ประกาศงดบิณฑบาตส่ง push ถึงบ้านของวัดได้
 - ยังไม่ทำหน้ารวมตามพื้นที่ ทำเมื่อมีวัดในระบบจำนวนหนึ่งแล้ว
 - เอกสาร Next.js ตรงตามเวอร์ชันที่ติดตั้งอยู่ที่ `node_modules/next/dist/docs/` ให้อ่านจากที่นี่ก่อนเขียนโค้ด
 
@@ -243,12 +248,14 @@ notifications    บันทึกการแจ้งเตือน (กั�
   sent_at        timestamp
   expire_at      timestamp     TTL 30 วัน (fieldOverrides ใน firestore.indexes.json)
 
-announcements    ประกาศจากวัด
+announcements    ประกาศจากวัด (alms_announcements, อ่านได้ทุกคน)
   id             PK
   temple_id      FK -> temples
-  date           date
-  type           string        เช่น "no_alms"
+  date           string        "YYYY-MM-DD"
+  type           string        "no_alms"
   message        string
+  created_at     timestamp
+  expire_at      timestamp     TTL: date + 7 วัน
 ```
 
 ความสัมพันธ์ (1 ต่อหลาย):
