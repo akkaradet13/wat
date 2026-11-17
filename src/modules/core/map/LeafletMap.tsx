@@ -9,14 +9,14 @@ import type { LatLng } from "../temples/types";
 export interface MapPin {
   pos: LatLng;
   label: string;
-  kind: "temple" | "monk";
+  kind: "temple" | "monk" | "home";
 }
 
 export interface MapProps {
   center: LatLng;
   pins: MapPin[];
   zoom?: number;
-  /** Picker mode: the single "temple" pin is draggable and map clicks move it. */
+  /** Picker mode: the first pin is draggable and map clicks move it. */
   onPick?: (p: LatLng) => void;
   /** Keep this point in view when it changes (live monk position). */
   follow?: LatLng;
@@ -26,6 +26,7 @@ export interface MapProps {
 const icons = {
   temple: L.divIcon({ html: "🛕", className: "map-pin", iconSize: [40, 40], iconAnchor: [20, 36] }),
   monk: L.divIcon({ html: "🧡", className: "map-pin map-pin-live", iconSize: [44, 44], iconAnchor: [22, 22] }),
+  home: L.divIcon({ html: "🏠", className: "map-pin", iconSize: [40, 40], iconAnchor: [20, 36] }),
 };
 
 function Follow({ to }: { to?: LatLng }) {
@@ -48,19 +49,21 @@ export default function LeafletMap({ center, pins, zoom = 16, onPick, follow }: 
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {pins.map((p) => (
+      {pins.map((p, i) => (
         <Marker
           key={p.kind}
           position={[p.pos.lat, p.pos.lng]}
           icon={icons[p.kind]}
-          draggable={!!onPick && p.kind === "temple"}
+          draggable={!!onPick && i === 0}
           eventHandlers={
-            onPick && {
-              dragend: (e) => {
-                const ll = (e.target as L.Marker).getLatLng();
-                onPick({ lat: ll.lat, lng: ll.lng });
-              },
-            }
+            onPick && i === 0
+              ? {
+                  dragend: (e) => {
+                    const ll = (e.target as L.Marker).getLatLng();
+                    onPick({ lat: ll.lat, lng: ll.lng });
+                  },
+                }
+              : undefined
           }
         >
           <Tooltip direction="top" offset={[0, -30]} permanent={p.kind === "monk"}>

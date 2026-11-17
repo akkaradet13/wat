@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { HomeAlert } from "@/modules/alms/HomeAlert";
 import { LiveTempleMap } from "@/modules/alms/LiveTempleMap";
 import { getTempleBySlug } from "@/modules/core/temples/server";
 import { SECTS, TEMPLE_TYPES } from "@/modules/core/temples/types";
@@ -90,6 +91,7 @@ export default async function TemplePage({ params }: PageProps<"/wat/[slug]">) {
 
       {/* Live tracking first: it is what people come here for every morning. */}
       <LiveTempleMap templeId={t.id} templeName={t.name} location={t.location} />
+      <HomeAlert templeId={t.id} templeName={t.name} location={t.location} />
 
       {t.photo_url && (
         // ponytail: unoptimized because temples paste photo URLs from any host; add Firebase Storage uploads later.

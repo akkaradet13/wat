@@ -1,7 +1,8 @@
 import type { DecodedIdToken } from "firebase-admin/auth";
 import { FieldValue, GeoPoint, type DocumentSnapshot, type Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/modules/core/firebase/admin";
-import { ROUNDS, ROUTES, STALE_MS } from "./constants";
+import { ROUNDS, STALE_MS } from "./constants";
+import { defaultRouteId } from "./households";
 
 // Server only. Every function takes the verified token and checks it belongs to the temple.
 type Result<T = object> = (T & { ok: true }) | { ok: false; status: number; error: string };
@@ -11,15 +12,6 @@ const bangkokDate = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ban
 const lastSeen = (d: DocumentSnapshot) =>
   ((d.get("last_updated_at") ?? d.get("started_at")) as Timestamp | undefined)?.toMillis() ?? 0;
 const endFields = () => ({ status: "ended", ended_at: FieldValue.serverTimestamp(), last_position: FieldValue.delete() });
-
-/** The temple's first route. Created on demand so a new temple can send without setup. */
-async function defaultRouteId(templeId: string): Promise<string> {
-  const col = adminDb().collection(ROUTES);
-  const snap = await col.where("temple_id", "==", templeId).limit(1).get();
-  if (!snap.empty) return snap.docs[0].id;
-  const ref = await col.add({ temple_id: templeId, name: "สายหลัก", start_time: "06:00" });
-  return ref.id;
-}
 
 export async function startRound(u: DecodedIdToken): Promise<Result<{ id: string }>> {
   if (!canSend(u)) return { ok: false, status: 403, error: "บัญชีนี้ไม่มีสิทธิ์ส่งพิกัด" };

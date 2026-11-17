@@ -8,6 +8,8 @@ service cloud.firestore {
     match /alms_routes/{id} { allow read: if true; }
     // Ended rounds have last_position deleted, so only active rounds expose a location.
     match /alms_rounds/{id} { allow read: if true; }
+    // Household pin + FCM token: private to its owner.
+    match /alms_households/{uid} { allow read: if request.auth != null && request.auth.uid == uid; }
     match /users/{uid} { allow read: if request.auth != null && request.auth.uid == uid; }
   }
 }

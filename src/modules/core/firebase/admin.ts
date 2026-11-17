@@ -1,6 +1,7 @@
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { getMessaging } from "firebase-admin/messaging";
 
 // Server only. Never import from a Client Component.
 // On Firebase App Hosting: no key, uses the backend's service account (Application Default Credentials).
@@ -17,3 +18,4 @@ function app(): App {
 
 export const adminDb = () => getFirestore(app());
 export const adminAuth = () => getAuth(app());
+export const adminMessaging = () => getMessaging(app());

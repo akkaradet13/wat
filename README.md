@@ -10,7 +10,7 @@ Next.js 16 (App Router) + Firebase (Auth, Firestore, App Hosting) + Leaflet/Open
 ต้องมี Node.js 22 ขึ้นไป
 
 1. สร้าง Firebase project (ควรแยก project สำหรับ dev กับ production)
-   - เปิด **Authentication** แล้วเปิดวิธี Email/Password
+   - เปิด **Authentication** (กด Get started เท่านั้น วิธีล็อกอินเปิดจาก `firebase.json` ในข้อ 4)
    - เปิด **Cloud Firestore**
    - เพิ่ม Web app เพื่อเอาค่า config
    - ไปที่ Project settings > Service accounts > Generate new private key
@@ -21,7 +21,8 @@ Next.js 16 (App Router) + Firebase (Auth, Firestore, App Hosting) + Leaflet/Open
    npm run seed -- --dev   # ใส่ข้อมูลทดสอบวัดนิคมกิตติยาราม (เฉพาะ project dev เท่านั้น)
    npm run dev
    ```
-4. Deploy rules ไปที่ project dev ครั้งแรก: `npx firebase-tools deploy --only firestore --project <dev-project-id>`
+4. Deploy rules และเปิด Auth providers (Email/Password, Anonymous) ไปที่ project dev ครั้งแรก:
+   `npx firebase-tools deploy --only firestore,auth --project <dev-project-id>`
 
 ตรวจโค้ดก่อน push: `npm run lint && npm run typecheck && npm run check`
 
@@ -48,11 +49,12 @@ geolocation ต้องใช้ HTTPS ถ้าจะทดสอบหน้�
    - ตั้งชื่อ backend `wat` ให้ตรงกับ URL ใน `apphosting.yaml` (ถ้าใช้ชื่ออื่นให้แก้ `NEXT_PUBLIC_SITE_URL`)
    - push เข้า `main` แล้ว deploy อัตโนมัติ
 3. **สิทธิ์ของเซิร์ฟเวอร์**: Google Cloud IAM > service account `firebase-app-hosting-compute@<project-id>.iam.gserviceaccount.com`
-   เพิ่ม role **Cloud Datastore User** และ **Firebase Authentication Admin**
+   เพิ่ม role **Cloud Datastore User**, **Firebase Authentication Admin** และ **Firebase Cloud Messaging API Admin**
    (เซิร์ฟเวอร์ใช้สิทธิ์นี้แทน service account key จึงไม่ต้องเก็บ key บน production)
 4. **Firebase Authentication** > Settings > Authorized domains: เพิ่มโดเมน `*.hosted.app` ของ backend และโดเมนจริง
 5. **GitHub Actions** (`.github/workflows/ci.yml`) deploy `firestore.rules` และ `firestore.indexes.json` เมื่อ push เข้า `main`
-   - Secret `FIREBASE_SERVICE_ACCOUNT` = JSON ของ service account ที่มีสิทธิ์ Firebase Rules Admin, Cloud Datastore Index Admin และ Service Usage Consumer
+   - Secret `FIREBASE_SERVICE_ACCOUNT` = JSON ของ service account ที่มีสิทธิ์ Firebase Rules Admin, Cloud Datastore Index Admin,
+     Firebase Authentication Admin และ Service Usage Consumer (CI deploy ทั้ง rules และ Auth providers ใน `firebase.json`)
    - Variable `FIREBASE_PROJECT_ID`
    - ห้ามแก้ rules หรือ indexes ใน console ให้แก้ในไฟล์แล้ว push
 6. **Google Search Console**: ยืนยันโดเมนแล้วส่ง `https://<โดเมน>/sitemap.xml`

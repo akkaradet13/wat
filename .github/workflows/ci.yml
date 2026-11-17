@@ -17,7 +17,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run check
 
-  # Firestore rules and indexes live in the repo and are deployed only from here, never edited in the console.
+  # Firestore rules/indexes and Auth providers live in the repo and are deployed only from here, never edited in the console.
   deploy-firestore:
     if: github.ref == 'refs/heads/main'
     needs: check
@@ -27,6 +27,6 @@ jobs:
       - run: printf "%s" "$SA" > "$RUNNER_TEMP/sa.json"
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      - run: npx -y firebase-tools@15 deploy --only firestore --project "${{ vars.FIREBASE_PROJECT_ID }}" --non-interactive
+      - run: npx -y firebase-tools@15 deploy --only firestore,auth --project "${{ vars.FIREBASE_PROJECT_ID }}" --non-interactive
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json

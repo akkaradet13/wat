@@ -9,7 +9,8 @@
 - โดเมนยังไม่ได้เลือก ให้ถามเจ้าของก่อนตั้งค่า `metadataBase`, canonical และ sitemap
 
 ไฟล์นี้สรุปบริบทและข้อตกลงของโปรเจกต์ เพื่อให้ Claude Code ทำงานต่อได้โดยไม่ต้องถามซ้ำ
-สถานะปัจจุบัน (2026-11-17): **Phase 1 เสร็จและ deploy แล้ว** ที่ https://wat--watweb-33601.asia-southeast1.hosted.app
+สถานะปัจจุบัน (2026-11-17): **Phase 2 เสร็จ** (PWA, ปักหมุดบ้าน, เปิดแจ้งเตือน, หน้าสอน iPhone) ถัดไป Phase 3
+Phase 1 deploy แล้ว ที่ https://wat--watweb-33601.asia-southeast1.hosted.app
 (project `watweb-33601` เป็น dev มีข้อมูลทดสอบ) ทดสอบ flow ครบผ่าน Chrome แล้ว
 ถัดไป: ทดสอบเดินจริงบนมือถือ (GPS, Wake Lock) แล้วจึงเริ่ม Phase 2
 
@@ -21,6 +22,11 @@
 - สิทธิ์อยู่ใน custom claims: `temple_id`, `role` (`admin`/`sender`), `super_admin` ไม่ต้องอ่าน `users` ทุกครั้งที่ส่งพิกัด
 - สายแรกของวัด ("สายหลัก") สร้างให้อัตโนมัติเมื่อเริ่มรอบครั้งแรก แอดมินวัดส่งพิกัดเองได้ (บัญชีลูกศิษย์อยู่ใน Phase 4)
 - ยังไม่เขียน `locations` (ประวัติพิกัด) เพื่อประหยัดโควตา
+- Phase 2: ญาติโยมใช้ anonymous auth (เปิดผ่าน `firebase.json` > `auth.providers`)
+  ไม่ใช้ VAPID key ของเราเอง (SDK ใช้ key กลางของ Firebase) และ service worker ไม่โหลด Firebase SDK
+  ส่ง FCM แบบ data message `{title, body, url, tag}` แล้ว SW แสดงเอง
+- ไอคอนอยู่ใน `public/` ไม่ใช่ `app/icon.svg` เพราะไฟล์ไอคอนใน app/ ทำให้ `next dev` reload วน (Next 16.4)
+- ทดสอบ push อัตโนมัติด้วย Chrome ที่ Playwright สั่งไม่ได้ (subscribe ค้าง) ต้องทดสอบบนมือถือจริง
 - ยังไม่ทำหน้ารวมตามพื้นที่ ทำเมื่อมีวัดในระบบจำนวนหนึ่งแล้ว
 - เอกสาร Next.js ตรงตามเวอร์ชันที่ติดตั้งอยู่ที่ `node_modules/next/dist/docs/` ให้อ่านจากที่นี่ก่อนเขียนโค้ด
 
@@ -218,12 +224,14 @@ locations        ประวัติพิกัด
   recorded_at    timestamp
   expire_at      timestamp     ฟิลด์ TTL ตั้ง policy ใน firestore.indexes.json (fieldOverrides ttl: true)
 
-households       บ้านญาติโยม
+households       บ้านญาติโยม (alms_households, 1 เครื่อง = 1 บ้าน = 1 วัด)
   id             PK (= anonymous uid)
-  route_id       FK -> routes
+  temple_id      FK -> temples
+  route_id       FK -> routes   สายแรกของวัด (Phase 4 ให้เลือกสายได้)
   position       geopoint
-  radius_m       number
+  radius_m       number         200 | 300 | 500 (ค่าเริ่มต้น 300)
   fcm_token      string
+  updated_at     timestamp
 
 notifications    บันทึกการแจ้งเตือน (กันแจ้งซ้ำ)
   id             PK
