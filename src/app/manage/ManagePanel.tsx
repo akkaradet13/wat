@@ -29,6 +29,7 @@ export function ManagePanel() {
   if (!claims.temple_id) return <p>บัญชีนี้ยังไม่ได้ผูกกับวัด <Link href="/register">ลงทะเบียนวัด</Link></p>;
   if (claims.role !== "admin") return <p>เฉพาะแอดมินวัดเท่านั้น <Link href="/alms/send">ไปหน้าส่งพิกัด</Link></p>;
   if (!temple) return <p>กำลังโหลด…</p>;
+  if (temple.status === "suspended" && !claims.super_admin) return <p className="announce">วัดนี้ถูกระงับโดยผู้ดูแลระบบ หน้าวัดไม่แสดงต่อสาธารณะ และเพิ่มหรือแก้ไขข้อมูลไม่ได้</p>;
 
   return (
     <div className="stack">

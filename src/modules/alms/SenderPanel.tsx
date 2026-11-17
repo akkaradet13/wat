@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { authFetch, useUser } from "@/modules/core/auth/client";
 import { doc, getDoc } from "firebase/firestore";
 import { clientAuth, clientDb } from "@/modules/core/firebase/client";
+import { useTemple } from "@/modules/core/temples/client";
 import { AuthForm } from "@/modules/core/ui/AuthForm";
 import { SEND_INTERVAL_MS } from "./constants";
 import { useRoutes } from "./useRoutes";
@@ -44,6 +45,7 @@ export function SenderPanel() {
 
   const canSend = !!user && !!claims.temple_id;
   const routes = useRoutes(claims.temple_id);
+  const { temple } = useTemple(claims.temple_id);
   const [routeId, setRouteId] = useState("");
   const [name, setName] = useState("");
 
@@ -143,6 +145,9 @@ export function SenderPanel() {
         </Link>
       </div>
     );
+
+  if (temple?.status === "suspended" && !roundId)
+    return <p className="announce">วัดนี้ถูกระงับโดยผู้ดูแลระบบ จึงส่งพิกัดไม่ได้</p>;
 
   return (
     <div className="stack">

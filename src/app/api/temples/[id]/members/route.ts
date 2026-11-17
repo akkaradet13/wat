@@ -1,11 +1,12 @@
-import { addMember, isTempleAdmin, listMembers, removeMember, setMemberRole } from "@/modules/core/auth/members";
-import { forbidden, getUser, jsonError, readJson, unauthorized } from "@/modules/core/auth/server";
+import { addMember, listMembers, removeMember, setMemberRole, templeAdminDenied } from "@/modules/core/auth/members";
+import { getUser, jsonError, readJson, unauthorized } from "@/modules/core/auth/server";
 
 async function guard(req: Request, ctx: RouteContext<"/api/temples/[id]/members">) {
   const user = await getUser(req);
   if (!user) return { res: unauthorized() };
   const { id } = await ctx.params;
-  return isTempleAdmin(user, id) ? { id } : { res: forbidden() };
+  const deny = await templeAdminDenied(user, id);
+  return deny ? { res: jsonError(deny.status, deny.error) } : { id };
 }
 const reply = (r: { ok: true } | { ok: false; status: number; error: string }, body?: object) =>
   r.ok ? Response.json({ ok: true, ...body }) : jsonError(r.status, r.error);

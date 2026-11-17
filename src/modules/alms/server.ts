@@ -1,6 +1,8 @@
 import type { DecodedIdToken } from "firebase-admin/auth";
 import { FieldValue, GeoPoint, type DocumentSnapshot, type Timestamp } from "firebase-admin/firestore";
+import { SUSPENDED_ERROR } from "@/modules/core/auth/members";
 import { adminDb } from "@/modules/core/firebase/admin";
+import { getTempleStatus } from "@/modules/core/temples/server";
 import { ROUNDS, ROUTES, STALE_MS } from "./constants";
 import { pickRoute } from "./households";
 import { notifyNearby } from "./notify";
@@ -17,6 +19,7 @@ const endFields = () => ({ status: "ended", ended_at: FieldValue.serverTimestamp
 /** Start a round. `displayName` (optional) is the sender's own name for the map; saved to their profile. */
 export async function startRound(u: DecodedIdToken, requestedRoute?: unknown, displayName?: unknown): Promise<Result<{ id: string }>> {
   if (!canSend(u)) return { ok: false, status: 403, error: "บัญชีนี้ไม่มีสิทธิ์ส่งพิกัด" };
+  if ((await getTempleStatus(u.temple_id)) === "suspended") return { ok: false, status: 403, error: SUSPENDED_ERROR };
   const db = adminDb();
   const routeId = await pickRoute(u.temple_id, requestedRoute);
 
@@ -76,4 +79,14 @@ export async function endRound(u: DecodedIdToken, roundId: string): Promise<Resu
   const round = await ownActiveRound(u, roundId);
   if (round) await round.ref.update(endFields());
   return { ok: true }; // already ended is fine
+}
+
+/** Called when a temple is suspended: stop showing its monks right away. */
+export async function endTempleRounds(templeId: string): Promise<void> {
+  const db = adminDb();
+  const active = await db.collection(ROUNDS).where("temple_id", "==", templeId).where("status", "==", "active").get();
+  if (active.empty) return;
+  const batch = db.batch();
+  active.docs.forEach((d) => batch.update(d.ref, endFields()));
+  await batch.commit();
 }

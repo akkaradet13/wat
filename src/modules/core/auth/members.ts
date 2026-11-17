@@ -1,6 +1,7 @@
 import { randomInt } from "node:crypto";
 import type { DecodedIdToken } from "firebase-admin/auth";
 import { adminAuth, adminDb } from "../firebase/admin";
+import { getTempleStatus } from "../temples/server";
 
 // Server only. Temple membership = users/{uid} doc + custom claims { temple_id, role }.
 
@@ -15,6 +16,17 @@ type Fail = { ok: false; status: number; error: string };
 
 export const isTempleAdmin = (u: DecodedIdToken, templeId: string) =>
   u.super_admin === true || (u.temple_id === templeId && u.role === "admin");
+
+export const SUSPENDED_ERROR = "วัดนี้ถูกระงับโดยผู้ดูแลระบบ จึงเพิ่มหรือแก้ไขข้อมูลไม่ได้";
+
+/** Why this user may not change the temple, or null if allowed. Suspended temples are read-only except for super admins. */
+export async function templeAdminDenied(u: DecodedIdToken, templeId: string): Promise<Fail | null> {
+  if (!isTempleAdmin(u, templeId)) return { ok: false, status: 403, error: "ไม่มีสิทธิ์ทำรายการนี้" };
+  if (u.super_admin === true) return null;
+  const status = await getTempleStatus(templeId);
+  if (!status) return { ok: false, status: 404, error: "ไม่พบวัด" };
+  return status === "suspended" ? { ok: false, status: 403, error: SUSPENDED_ERROR } : null;
+}
 
 const users = () => adminDb().collection("users");
 const ROLES: Role[] = ["admin", "sender"];

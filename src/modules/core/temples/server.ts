@@ -106,3 +106,8 @@ export async function updateTemple(id: string, input: TempleInput): Promise<stri
   await ref.update({ ...rest, location: new GeoPoint(location.lat, location.lng), updated_at: FieldValue.serverTimestamp() });
   return snap.get("slug") as string;
 }
+
+export async function getTempleStatus(id: string): Promise<TempleStatus | null> {
+  const snap = await temples().doc(id).get();
+  return snap.exists ? (snap.get("status") as TempleStatus) : null;
+}

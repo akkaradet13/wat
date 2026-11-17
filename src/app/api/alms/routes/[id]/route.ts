@@ -1,13 +1,14 @@
 import { deleteRoute, updateRoute } from "@/modules/alms/admin";
-import { isTempleAdmin } from "@/modules/core/auth/members";
-import { forbidden, getUser, jsonError, readJson, unauthorized } from "@/modules/core/auth/server";
+import { templeAdminDenied } from "@/modules/core/auth/members";
+import { getUser, jsonError, readJson, unauthorized } from "@/modules/core/auth/server";
 
 async function guard(req: Request) {
   const user = await getUser(req);
   if (!user) return { res: unauthorized() };
   const b = await readJson(req);
   const templeId = String(b.temple_id ?? "");
-  return isTempleAdmin(user, templeId) ? { templeId, b } : { res: forbidden() };
+  const deny = await templeAdminDenied(user, templeId);
+  return deny ? { res: jsonError(deny.status, deny.error) } : { templeId, b };
 }
 const reply = (r: { ok: true } | { ok: false; status: number; error: string }) =>
   r.ok ? Response.json({ ok: true }) : jsonError(r.status, r.error);
