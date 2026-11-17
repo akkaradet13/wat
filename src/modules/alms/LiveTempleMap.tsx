@@ -4,9 +4,8 @@ import { MapView, type MapPin } from "@/modules/core/map";
 import type { LatLng } from "@/modules/core/temples/types";
 import { useActiveRounds } from "./useActiveRounds";
 
-/** "หลวงพ่อทองอินทร์" or "พระ"; adds the route name when several routes are out. */
-const whoLabel = (r: { monks: string; routeName: string }, many: boolean) =>
-  [r.monks || "พระ", many && r.routeName && `(${r.routeName})`].filter(Boolean).join(" ");
+/** Everyone walking is a monk, so "พระ" alone says nothing: show the monks' names and the route. */
+const whoLabel = (r: { monks: string; routeName: string }) => [r.monks, r.routeName].filter(Boolean).join(" · ") || "พระ";
 
 const timeTh = (ms: number) => new Date(ms).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Asia/Bangkok" });
 
@@ -16,7 +15,7 @@ export function LiveTempleMap({ templeId, templeName, location }: { templeId: st
   const latest = live.reduce<(typeof live)[number] | undefined>((a, r) => (!a || r.updatedAt > a.updatedAt ? r : a), undefined);
   const pins: MapPin[] = [
     { kind: "temple", pos: location, label: templeName },
-    ...live.map((r): MapPin => ({ kind: "monk", pos: r.position!, label: whoLabel(r, live.length > 1) })),
+    ...live.map((r): MapPin => ({ kind: "monk", pos: r.position!, label: whoLabel(r) })),
   ];
 
   return (
@@ -24,12 +23,11 @@ export function LiveTempleMap({ templeId, templeName, location }: { templeId: st
       {latest ? (
         <p className="live-banner">
           <span className="live-dot" /> กำลังออกบิณฑบาต{live.length > 1 && ` ${live.length} สาย`} · อัปเดต {timeTh(latest.updatedAt)} น.
-          {live.some((r) => r.monks) && (
-            <>
-              <br />
-              {live.map((r) => whoLabel(r, live.length > 1)).join(" · ")}
-            </>
-          )}
+          {live.map((r) => (
+            <span key={r.id} className="live-who">
+              {whoLabel(r)}
+            </span>
+          ))}
         </p>
       ) : (
         <p className="idle-banner">ขณะนี้ไม่ได้ออกบิณฑบาต</p>

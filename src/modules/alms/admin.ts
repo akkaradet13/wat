@@ -1,6 +1,6 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/modules/core/firebase/admin";
-import { ANNOUNCEMENTS, HOUSEHOLDS, ROUTES } from "./constants";
+import { ANNOUNCEMENTS, HOUSEHOLDS, ROUNDS, ROUTES } from "./constants";
 import { pushToHousehold, templeRoute } from "./households";
 
 // Server only. Temple-admin actions for the alms module. Callers must check isTempleAdmin first.
@@ -31,7 +31,12 @@ export async function updateRoute(templeId: string, routeId: string, b: Record<s
   if (!p.data) return { ok: false, status: 400, error: p.error };
   const route = await templeRoute(templeId, routeId);
   if (!route) return { ok: false, status: 404, error: "ไม่พบสาย" };
-  await route.ref.update(p.data);
+  // Rounds copy the route name/monks at start; refresh any active round so edits show right away.
+  const active = await adminDb().collection(ROUNDS).where("route_id", "==", routeId).where("status", "==", "active").get();
+  const batch = adminDb().batch();
+  batch.update(route.ref, p.data);
+  active.docs.forEach((d) => batch.update(d.ref, { route_name: p.data.name, monks: p.data.monks }));
+  await batch.commit();
   return { ok: true };
 }
 
