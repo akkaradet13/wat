@@ -9,8 +9,9 @@
 - โดเมนยังไม่ได้เลือก ให้ถามเจ้าของก่อนตั้งค่า `metadataBase`, canonical และ sitemap
 
 ไฟล์นี้สรุปบริบทและข้อตกลงของโปรเจกต์ เพื่อให้ Claude Code ทำงานต่อได้โดยไม่ต้องถามซ้ำ
-สถานะปัจจุบัน (2026-11-17): **Phase 1 เขียนโค้ดเสร็จ ยังไม่ได้ทดสอบกับ Firebase จริง** (รอ Firebase project จากเจ้าของ)
-ถัดไป: ต่อ Firebase, ทดสอบบนมือถือจริง แล้วจึงเริ่ม Phase 2
+สถานะปัจจุบัน (2026-11-17): **Phase 1 เสร็จและ deploy แล้ว** ที่ https://wat--watweb-33601.asia-southeast1.hosted.app
+(project `watweb-33601` เป็น dev มีข้อมูลทดสอบ) ทดสอบ flow ครบผ่าน Chrome แล้ว
+ถัดไป: ทดสอบเดินจริงบนมือถือ (GPS, Wake Lock) แล้วจึงเริ่ม Phase 2
 
 การตัดสินใจทางเทคนิคใน Phase 1:
 - Deploy บน **Firebase App Hosting** (เจ้าของเลือกแทน Vercel เมื่อ 2026-11-17) ไม่ต้องใช้ service account key บน production
