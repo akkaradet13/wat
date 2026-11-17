@@ -67,8 +67,9 @@ export async function notifyNearby(round: { id: string; route_id: string; temple
       }
       const distance = Math.max(50, Math.round(h.d / 50) * 50);
       const result = await pushToHousehold(h.id, {
-        title: `${round.monks || "พระ"}ใกล้ถึงบ้านแล้ว 🙏`,
-        body: `${temple.name} · ห่างประมาณ ${distance} เมตร เตรียมใส่บาตรได้เลย`,
+        // Short title (lock screens cut long ones); the full monk name goes in the body, which wraps.
+        title: "พระใกล้ถึงบ้านแล้ว 🙏",
+        body: `${round.monks ? `${round.monks} · ` : ""}${temple.name} · ห่างประมาณ ${distance} เมตร เตรียมใส่บาตรได้เลย`,
         url: temple.slug ? `/wat/${temple.slug}` : "/",
         tag: `round-${round.id}`,
       });
