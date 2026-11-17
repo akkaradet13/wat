@@ -16,6 +16,16 @@ const todayTh = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok
 const dateTh = (d: string) =>
   new Date(d).toLocaleDateString("th-TH", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
+/** Next 60 days as Thai labels. `<input type="date">` follows the browser language and may show mm/dd/yyyy. */
+function nextDays(n = 60) {
+  const start = Date.parse(todayTh());
+  return Array.from({ length: n }, (_, i) => {
+    const value = new Date(start + i * 86_400_000).toISOString().slice(0, 10);
+    const label = new Date(value).toLocaleDateString("th-TH", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+    return { value, label: i === 0 ? `วันนี้ · ${label}` : i === 1 ? `พรุ่งนี้ · ${label}` : label };
+  });
+}
+
 /** Upcoming announcements (today onward), live. */
 function useAnnouncements(templeId: string) {
   const [items, setItems] = useState<Announcement[] | null>(null);
@@ -98,7 +108,13 @@ export function AnnouncementsPanel({ templeId }: { templeId: string }) {
         <h3>ประกาศงดบิณฑบาต</h3>
         <label>
           วันที่
-          <input name="date" type="date" required min={todayTh()} />
+          <select name="date" defaultValue={nextDays(2)[1].value}>
+            {nextDays().map((d) => (
+              <option key={d.value} value={d.value}>
+                {d.label}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           ข้อความ (ไม่บังคับ)

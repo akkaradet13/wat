@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "ClaudeInChromeDomain(wat--watweb-33601.asia-southeast1.hosted.app)"
+    ]
+  }
+}

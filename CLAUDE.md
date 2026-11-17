@@ -32,6 +32,7 @@ Phase 1 deploy แล้ว ที่ https://wat--watweb-33601.asia-southeast1.
   `next dev` ยังอาจ reload วนช่วงแรกตอนเปิด route ที่ยังไม่เคย compile แล้วหยุดเอง ไม่เกิดใน production build
 - เวลาใช้รูปแบบ 24 ชม. เสมอ: ช่องเลือกเวลาเป็น select ชั่วโมง/นาที (ไม่ใช้ `<input type="time">` ซึ่งขึ้น AM/PM ตามภาษาเครื่อง)
   และแสดงเวลาด้วย `hourCycle: "h23"`, `timeZone: "Asia/Bangkok"`
+- วันที่ก็เช่นกัน: ไม่ใช้ `<input type="date">` (ขึ้น mm/dd/yyyy ตามภาษาเบราว์เซอร์) ใช้ select วันที่แบบไทย เช่น "พรุ่งนี้ · พุธ 18 พ.ย. 2569"
 - ทดสอบ push อัตโนมัติด้วย Chrome ที่ Playwright สั่งไม่ได้ (subscribe ค้าง) ต้องทดสอบบนมือถือจริง
 - Phase 3: `src/modules/alms/notify.ts` เก็บรายการบ้านต่อสายใน memory 60 วินาที เพื่อไม่ให้อ่าน Firestore ทุกครั้งที่ส่งพิกัด
   การทดสอบที่ส่ง push ให้ใช้ "วัดทดสอบของ Claude" เสมอ วัดนิคมกิตติยารามมีอุปกรณ์จริงของเจ้าของลงทะเบียนอยู่
