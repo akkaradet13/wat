@@ -31,28 +31,6 @@ export default async function Home() {
           </li>
         ))}
       </ul>
-
-      <h2>สำหรับวัด</h2>
-      <div className="actions">
-        <Link href="/alms/send" className="action">
-          <span className="action-icon" aria-hidden>
-            📍
-          </span>
-          <span>
-            <strong>ส่งพิกัดบิณฑบาต</strong>
-            <span className="muted">สำหรับผู้ที่เดินไปกับพระ</span>
-          </span>
-        </Link>
-        <Link href="/register" className="action">
-          <span className="action-icon" aria-hidden>
-            🛕
-          </span>
-          <span>
-            <strong>ลงทะเบียนวัด</strong>
-            <span className="muted">ฟรี ใช้งานได้ทันที</span>
-          </span>
-        </Link>
-      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Thai } from "next/font/google";
 import Link from "next/link";
 import { ServiceWorker } from "@/modules/core/ui/ServiceWorker";
-import { UserMenu } from "@/modules/core/ui/UserMenu";
+import { SiteMenu } from "@/modules/core/ui/SiteMenu";
 import "./globals.css";
 
 const font = Noto_Sans_Thai({ subsets: ["thai", "latin"], display: "swap" });
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Link href="/" className="logo">
             🛕 Wat
           </Link>
-          <UserMenu />
+          <SiteMenu />
         </header>
         <main className="container">{children}</main>
         <ServiceWorker />
