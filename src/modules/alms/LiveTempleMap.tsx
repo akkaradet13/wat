@@ -4,8 +4,8 @@ import { MapView, type MapPin } from "@/modules/core/map";
 import type { LatLng } from "@/modules/core/temples/types";
 import { useActiveRounds } from "./useActiveRounds";
 
-/** Everyone walking is a monk, so "พระ" alone says nothing: show the monks' names and the route. */
-const whoLabel = (r: { monks: string; routeName: string }) => [r.monks, r.routeName].filter(Boolean).join(" · ") || "พระ";
+/** Who is sending (their own name from the sender page) and which route. */
+const whoLabel = (r: { senderName: string; routeName: string }) => [r.senderName, r.routeName].filter(Boolean).join(" · ") || "พระ";
 
 const timeTh = (ms: number) => new Date(ms).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Asia/Bangkok" });
 

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { authFetch, useUser } from "@/modules/core/auth/client";
-import { clientAuth } from "@/modules/core/firebase/client";
+import { doc, getDoc } from "firebase/firestore";
+import { clientAuth, clientDb } from "@/modules/core/firebase/client";
 import { AuthForm } from "@/modules/core/ui/AuthForm";
 import { SEND_INTERVAL_MS } from "./constants";
 import { useRoutes } from "./useRoutes";
@@ -44,6 +45,15 @@ export function SenderPanel() {
   const canSend = !!user && !!claims.temple_id;
   const routes = useRoutes(claims.temple_id);
   const [routeId, setRouteId] = useState("");
+  const [name, setName] = useState("");
+
+  // Prefill the sender's own name (users/{uid} is readable by its owner).
+  useEffect(() => {
+    if (!user) return;
+    getDoc(doc(clientDb(), "users", user.uid))
+      .then((d) => setName((n) => n || (d.get("display_name") as string) || ""))
+      .catch(() => {});
+  }, [user]);
   useEffect(() => {
     if (!roundId || !canSend) return;
     let wakeLock: WakeLockSentinel | null = null;
@@ -101,7 +111,10 @@ export function SenderPanel() {
 
   async function start() {
     setBusy(true);
-    const { ok, data } = await authFetch<{ id: string }>("/api/alms/rounds", { route_id: routeId || routes?.[0]?.id });
+    const { ok, data } = await authFetch<{ id: string }>("/api/alms/rounds", {
+      route_id: routeId || routes?.[0]?.id,
+      display_name: name.trim(),
+    });
     setBusy(false);
     if (!ok || !data.id) return setMessage(data.error || "เริ่มรอบไม่สำเร็จ");
     store.set(data.id);
@@ -149,6 +162,16 @@ export function SenderPanel() {
           <p className="idle-banner" role="status">
             หยุดส่งแล้ว
           </p>
+          <label>
+            ชื่อที่แสดงบนแผนที่
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={60}
+              placeholder="เช่น พระเอิง"
+              autoComplete="name"
+            />
+          </label>
           {routes && routes.length > 1 && (
             <label>
               สายที่จะเดิน
@@ -161,7 +184,7 @@ export function SenderPanel() {
               </select>
             </label>
           )}
-          <button className="btn btn-xl" onClick={start} disabled={busy}>
+          <button className="btn btn-xl" onClick={start} disabled={busy || !name.trim()}>
             เริ่มรอบบิณฑบาต
           </button>
         </>

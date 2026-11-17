@@ -14,9 +14,7 @@ function parseRoute(b: Record<string, unknown>) {
   const start_time = str(b.start_time, 5);
   if (!name) return { error: "กรุณาตั้งชื่อสาย" };
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(start_time)) return { error: "เวลาออกไม่ถูกต้อง" };
-  // Who walks this route, shown on the live map, e.g. "หลวงพ่อทองอินทร์, พระสมชาย".
-  const monks = str(b.monks, 120);
-  return { data: { name, start_time, monks } };
+  return { data: { name, start_time } };
 }
 
 export async function createRoute(templeId: string, b: Record<string, unknown>): Promise<Result<{ id: string }>> {
@@ -31,11 +29,11 @@ export async function updateRoute(templeId: string, routeId: string, b: Record<s
   if (!p.data) return { ok: false, status: 400, error: p.error };
   const route = await templeRoute(templeId, routeId);
   if (!route) return { ok: false, status: 404, error: "ไม่พบสาย" };
-  // Rounds copy the route name/monks at start; refresh any active round so edits show right away.
+  // Rounds copy the route name at start; refresh any active round so a rename shows right away.
   const active = await adminDb().collection(ROUNDS).where("route_id", "==", routeId).where("status", "==", "active").get();
   const batch = adminDb().batch();
   batch.update(route.ref, p.data);
-  active.docs.forEach((d) => batch.update(d.ref, { route_name: p.data.name, monks: p.data.monks }));
+  active.docs.forEach((d) => batch.update(d.ref, { route_name: p.data.name }));
   await batch.commit();
   return { ok: true };
 }

@@ -41,7 +41,7 @@ const templeInfo = (templeId: string) =>
   });
 
 /** Push "monk is near" to every household within its radius, once per round. Returns how many were sent. */
-export async function notifyNearby(round: { id: string; route_id: string; temple_id: string; monks?: string }, monk: LatLng): Promise<number> {
+export async function notifyNearby(round: { id: string; route_id: string; temple_id: string; sender_name?: string }, monk: LatLng): Promise<number> {
   const near = (await householdsOnRoute(round.route_id))
     .map((h) => ({ ...h, d: distanceM(monk, h.pos) }))
     .filter((h) => h.d <= h.radius && !notified.has(`${round.id}_${h.id}`));
@@ -69,7 +69,7 @@ export async function notifyNearby(round: { id: string; route_id: string; temple
       const result = await pushToHousehold(h.id, {
         // Short title (lock screens cut long ones); the full monk name goes in the body, which wraps.
         title: "พระใกล้ถึงบ้านแล้ว 🙏",
-        body: `${round.monks ? `${round.monks} · ` : ""}${temple.name} · ห่างประมาณ ${distance} เมตร เตรียมใส่บาตรได้เลย`,
+        body: `${round.sender_name ? `${round.sender_name} · ` : ""}${temple.name} · ห่างประมาณ ${distance} เมตร เตรียมใส่บาตรได้เลย`,
         url: temple.slug ? `/wat/${temple.slug}` : "/",
         tag: `round-${round.id}`,
       });

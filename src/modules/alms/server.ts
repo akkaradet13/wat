@@ -14,7 +14,8 @@ const lastSeen = (d: DocumentSnapshot) =>
   ((d.get("last_updated_at") ?? d.get("started_at")) as Timestamp | undefined)?.toMillis() ?? 0;
 const endFields = () => ({ status: "ended", ended_at: FieldValue.serverTimestamp(), last_position: FieldValue.delete() });
 
-export async function startRound(u: DecodedIdToken, requestedRoute?: unknown): Promise<Result<{ id: string }>> {
+/** Start a round. `displayName` (optional) is the sender's own name for the map; saved to their profile. */
+export async function startRound(u: DecodedIdToken, requestedRoute?: unknown, displayName?: unknown): Promise<Result<{ id: string }>> {
   if (!canSend(u)) return { ok: false, status: 403, error: "บัญชีนี้ไม่มีสิทธิ์ส่งพิกัด" };
   const db = adminDb();
   const routeId = await pickRoute(u.temple_id, requestedRoute);
@@ -30,11 +31,15 @@ export async function startRound(u: DecodedIdToken, requestedRoute?: unknown): P
     .forEach((d) => batch.update(d.ref, endFields()));
   const ref = db.collection(ROUNDS).doc();
   const route = await db.collection(ROUTES).doc(routeId).get();
+  const userRef = db.collection("users").doc(u.uid);
+  let senderName = typeof displayName === "string" ? displayName.trim().slice(0, 60) : "";
+  if (senderName) batch.set(userRef, { display_name: senderName }, { merge: true });
+  else senderName = ((await userRef.get()).get("display_name") as string) || "";
   batch.create(ref, {
     route_id: routeId,
     // Copied so the live map gets names from the one round doc it already listens to.
     route_name: route.get("name") ?? "",
-    monks: route.get("monks") ?? "",
+    sender_name: senderName,
     temple_id: u.temple_id,
     sender_id: u.uid,
     date: bangkokDate(),
@@ -61,7 +66,7 @@ export async function updateLocation(u: DecodedIdToken, roundId: string, lat: nu
   await round.ref.update({ last_position: new GeoPoint(lat, lng), last_updated_at: FieldValue.serverTimestamp() });
   // Alerts must never break location sending.
   await notifyNearby(
-    { id: round.id, route_id: round.get("route_id"), temple_id: round.get("temple_id"), monks: round.get("monks") ?? "" },
+    { id: round.id, route_id: round.get("route_id"), temple_id: round.get("temple_id"), sender_name: round.get("sender_name") ?? "" },
     { lat, lng },
   ).catch((e) => console.error("notifyNearby", e));
   return { ok: true };

@@ -12,7 +12,7 @@ export interface LiveRound {
   position: LatLng | null;
   updatedAt: number;
   routeName: string;
-  monks: string;
+  senderName: string;
 }
 
 /** Live active rounds, optionally for one temple. Rounds without a recent position are dropped. */
@@ -25,14 +25,14 @@ export function useActiveRounds(templeId?: string): LiveRound[] {
     return onSnapshot(query(collection(clientDb(), ROUNDS), ...filters), (snap) =>
       setRounds(
         snap.docs.map((d) => {
-          const x = d.data() as { temple_id: string; last_position?: GeoPoint; last_updated_at?: Timestamp; started_at?: Timestamp; route_name?: string; monks?: string };
+          const x = d.data() as { temple_id: string; last_position?: GeoPoint; last_updated_at?: Timestamp; started_at?: Timestamp; route_name?: string; sender_name?: string };
           return {
             id: d.id,
             temple_id: x.temple_id,
             position: x.last_position ? { lat: x.last_position.latitude, lng: x.last_position.longitude } : null,
             updatedAt: (x.last_updated_at ?? x.started_at)?.toMillis() ?? Date.now(),
             routeName: x.route_name ?? "",
-            monks: x.monks ?? "",
+            senderName: x.sender_name ?? "",
           };
         }),
       ),
