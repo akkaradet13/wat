@@ -3,7 +3,7 @@
 เว็บแอปที่ให้ญาติโยมเห็นว่าพระที่ออกบิณฑบาตเดินถึงไหนแล้ว
 บริบท การตัดสินใจ และแผนงานทั้งหมดอยู่ใน [CLAUDE.md](CLAUDE.md)
 
-Next.js 16 (App Router) + Firebase (Auth, Firestore) + Leaflet/OpenStreetMap, deploy บน Vercel
+Next.js 16 (App Router) + Firebase (Auth, Firestore, App Hosting) + Leaflet/OpenStreetMap
 
 ## ติดตั้งเพื่อพัฒนา
 
@@ -28,7 +28,7 @@ Next.js 16 (App Router) + Firebase (Auth, Firestore) + Leaflet/OpenStreetMap, de
 ## ทดสอบบนมือถือ
 
 geolocation ต้องใช้ HTTPS ถ้าจะทดสอบหน้าส่งพิกัดบนมือถือจริงให้รัน `npx next dev --experimental-https`
-แล้วเปิดผ่าน IP ของเครื่องในวงแลนเดียวกัน หรือทดสอบบน Vercel preview deployment
+แล้วเปิดผ่าน IP ของเครื่องในวงแลนเดียวกัน หรือทดสอบบน URL ของ App Hosting
 
 ## บทบาทผู้ใช้
 
@@ -38,20 +38,26 @@ geolocation ต้องใช้ HTTPS ถ้าจะทดสอบหน้�
 | ผู้ส่งพิกัด | Phase 1: แอดมินวัดส่งพิกัดเองที่ `/alms/send` (การเพิ่มบัญชีลูกศิษย์อยู่ใน Phase 4) |
 | super admin | ให้ super admin คนเดิมรัน `node --env-file=.env.local scripts/set-super-admin.mts <email>` แล้วผู้ได้รับสิทธิ์ต้องออกและเข้าสู่ระบบใหม่ |
 
-## Deploy ขึ้น production
+## Deploy ขึ้น production (Firebase App Hosting)
 
-ทุกบัญชี (GitHub, Firebase, Vercel, โดเมน) ต้องอยู่ในองค์กรหรือทีมที่มีเจ้าของมากกว่าหนึ่งคน
+ทุกบัญชี (GitHub, Firebase, โดเมน) ต้องอยู่ในองค์กรหรือทีมที่มีเจ้าของมากกว่าหนึ่งคน
 
-1. **Vercel**: import repo แล้วใส่ environment variables ตาม `.env.local.example`
-   - `NEXT_PUBLIC_SITE_URL` = โดเมนจริง
-   - `CRON_SECRET` = สตริงสุ่มยาว ๆ (Vercel Cron ใช้ปิดรอบที่ลืมกดจบ วันละครั้ง ดู `vercel.json`)
-2. **Firebase Authentication** > Settings > Authorized domains: เพิ่มโดเมนจริง
-3. **GitHub Actions** (`.github/workflows/ci.yml`) deploy `firestore.rules` และ `firestore.indexes.json` เมื่อ push เข้า `main`
-   - Secret `FIREBASE_SERVICE_ACCOUNT` = JSON ของ service account ที่มีสิทธิ์ Firebase Rules Admin และ Cloud Datastore Index Admin
+1. **Blaze plan**: App Hosting ต้องใช้ Blaze ตั้ง budget alert ใน Google Cloud Billing ตั้งแต่วันแรก
+2. **สร้าง backend**: Firebase console > Build > App Hosting > Create backend
+   - region `asia-southeast1`, เชื่อม GitHub repo นี้, branch `main`, root directory `/`
+   - ตั้งชื่อ backend `wat` ให้ตรงกับ URL ใน `apphosting.yaml` (ถ้าใช้ชื่ออื่นให้แก้ `NEXT_PUBLIC_SITE_URL`)
+   - push เข้า `main` แล้ว deploy อัตโนมัติ
+3. **สิทธิ์ของเซิร์ฟเวอร์**: Google Cloud IAM > service account `firebase-app-hosting-compute@<project-id>.iam.gserviceaccount.com`
+   เพิ่ม role **Cloud Datastore User** และ **Firebase Authentication Admin**
+   (เซิร์ฟเวอร์ใช้สิทธิ์นี้แทน service account key จึงไม่ต้องเก็บ key บน production)
+4. **Firebase Authentication** > Settings > Authorized domains: เพิ่มโดเมน `*.hosted.app` ของ backend และโดเมนจริง
+5. **GitHub Actions** (`.github/workflows/ci.yml`) deploy `firestore.rules` และ `firestore.indexes.json` เมื่อ push เข้า `main`
+   - Secret `FIREBASE_SERVICE_ACCOUNT` = JSON ของ service account ที่มีสิทธิ์ Firebase Rules Admin, Cloud Datastore Index Admin และ Service Usage Consumer
    - Variable `FIREBASE_PROJECT_ID`
    - ห้ามแก้ rules หรือ indexes ใน console ให้แก้ในไฟล์แล้ว push
-4. **Budget alert**: เปิด Blaze plan แล้วตั้ง budget alert ใน Google Cloud Billing ตั้งแต่วันแรก
-5. **Google Search Console**: ยืนยันโดเมนแล้วส่ง `https://<โดเมน>/sitemap.xml`
+6. **Google Search Console**: ยืนยันโดเมนแล้วส่ง `https://<โดเมน>/sitemap.xml`
+
+รอบที่ลืมกดจบ: หน้าเว็บไม่แสดงหลังไม่มีพิกัดเกิน 30 นาที และระบบปิดให้ในฐานข้อมูลเมื่อมีวัดใดก็ตามเริ่มรอบใหม่ จึงไม่ต้องตั้ง scheduler
 
 ## โครงสร้าง
 

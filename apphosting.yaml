@@ -1,0 +1,10 @@
+# Firebase App Hosting config. Firebase config and admin credentials are injected automatically.
+# Docs: https://firebase.google.com/docs/app-hosting/configure
+runConfig:
+  minInstances: 0 # scale to zero: no cost when idle
+  maxInstances: 2 # cost ceiling; raise when traffic needs it
+
+env:
+  # Public URL for canonical links, sitemap and JSON-LD. Change when the real domain is chosen.
+  - variable: NEXT_PUBLIC_SITE_URL
+    value: https://wat--watweb-33601.asia-southeast1.hosted.app

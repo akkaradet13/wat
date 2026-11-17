@@ -1,3 +1,0 @@
-{
-  "crons": [{ "path": "/api/alms/cron/close-stale", "schedule": "0 4 * * *" }]
-}

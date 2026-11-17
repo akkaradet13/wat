@@ -13,6 +13,8 @@
 ถัดไป: ต่อ Firebase, ทดสอบบนมือถือจริง แล้วจึงเริ่ม Phase 2
 
 การตัดสินใจทางเทคนิคใน Phase 1:
+- Deploy บน **Firebase App Hosting** (เจ้าของเลือกแทน Vercel เมื่อ 2026-11-17) ไม่ต้องใช้ service account key บน production
+  หมายเหตุ: ตอนเลือก App Hosting รับรอง Next.js ถึง 15.x อย่างเป็นทางการ ส่วน 16.x ต้องทดสอบเอง
 - Next.js 16.4 ใช้ ISR แบบเดิม (`revalidate` + `revalidatePath`) ปิด `cacheComponents` ไว้ ดูเหตุผลใน `next.config.ts`
 - **client อ่านอย่างเดียว ทุกการเขียนผ่าน Route Handler + `firebase-admin`** การตรวจสิทธิ์จึงอยู่ใน `src/app/api/**` ที่เดียว
 - สิทธิ์อยู่ใน custom claims: `temple_id`, `role` (`admin`/`sender`), `super_admin` ไม่ต้องอ่าน `users` ทุกครั้งที่ส่งพิกัด
@@ -92,7 +94,7 @@
 - ตั้ง budget alert ไว้ตั้งแต่วันแรก
 
 **ไม่ผูกกับบัญชีหรือความรู้ของคนคนเดียว**
-- Repo, Firebase project, Vercel และโดเมน อยู่ในบัญชีองค์กรหรือทีมที่มีเจ้าของมากกว่าหนึ่งคน
+- Repo, Firebase project และโดเมน อยู่ในบัญชีองค์กรหรือทีมที่มีเจ้าของมากกว่าหนึ่งคน
 - Security rules, indexes และการตั้งค่าทั้งหมดอยู่ใน repo (`firestore.rules`, `firestore.indexes.json`)
   deploy ผ่าน CI ไม่มีการตั้งค่าด้วยมือใน console
 - README ต้องพาคนใหม่ติดตั้งและ deploy ได้เองโดยไม่ต้องถามใคร
@@ -110,7 +112,6 @@
 
 - ญาติโยมใช้งานแบบ anonymous ไม่ต้องสมัครสมาชิก
 - ผู้ส่งพิกัดคือลูกศิษย์วัดที่ถือมือถือเดินตาม (พระไม่ต้องถือเอง)
-- Deploy บน Vercel
 - รัศมีแจ้งเตือนเริ่มต้น 300 เมตร
 
 ## Tech stack
@@ -124,7 +125,7 @@
 | ฝั่งเซิร์ฟเวอร์ | Route Handlers + `firebase-admin` |
 | แผนที่ | `react-leaflet` + OpenStreetMap |
 | คำนวณระยะ | haversine ในโค้ด (ไม่ใช้ geohash ดูเหตุผลใน data model) |
-| Hosting | Vercel |
+| Hosting | Firebase App Hosting (`apphosting.yaml`) |
 
 ก่อนเขียนโค้ดให้ตรวจเวอร์ชันล่าสุดและเอกสารปัจจุบันของ Next.js กับ Firebase JS SDK
 อย่าอิงจากความจำ เพราะ API ทั้งสองเปลี่ยนบ่อย
@@ -251,9 +252,8 @@ rounds → locations, notifications · households → notifications · users →
 
 **ปิดรอบอัตโนมัติ**
 - ตอนอ่าน: รอบที่ `last_updated_at` (หรือ `started_at`) เก่าเกิน 30 นาที ให้ถือว่าจบแล้วและไม่แสดงตำแหน่ง
-- ตอนเริ่มรอบใหม่: ปิดรอบ active เดิมของสายนั้นก่อน
-- Vercel Cron วันละครั้ง (`/api/alms/cron/close-stale`) ปิดสถานะในฐานข้อมูลให้ตรง
-  (Vercel Hobby รัน cron ได้วันละครั้ง วิธีนี้จึงไม่ต้องใช้ scheduler ที่ถี่กว่านั้น)
+- ตอนเริ่มรอบใหม่ (ของวัดใดก็ได้): ปิดรอบ active เดิมของสายนั้น และปิดรอบค้างทุกรอบในระบบ
+  ไม่ต้องใช้ scheduler
 
 **การลงทะเบียนวัด**
 - ทำผ่าน Route Handler `POST /api/temples` ด้วย `firebase-admin` เท่านั้น

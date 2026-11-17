@@ -1,5 +1,5 @@
 import type { DecodedIdToken } from "firebase-admin/auth";
-import { FieldValue, GeoPoint, Timestamp } from "firebase-admin/firestore";
+import { FieldValue, GeoPoint, type DocumentSnapshot, type Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/modules/core/firebase/admin";
 import { ROUNDS, ROUTES, STALE_MS } from "./constants";
 
@@ -8,6 +8,8 @@ type Result<T = object> = (T & { ok: true }) | { ok: false; status: number; erro
 
 const canSend = (u: DecodedIdToken) => typeof u.temple_id === "string" && (u.role === "admin" || u.role === "sender");
 const bangkokDate = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok" }).format(new Date());
+const lastSeen = (d: DocumentSnapshot) =>
+  ((d.get("last_updated_at") ?? d.get("started_at")) as Timestamp | undefined)?.toMillis() ?? 0;
 const endFields = () => ({ status: "ended", ended_at: FieldValue.serverTimestamp(), last_position: FieldValue.delete() });
 
 /** The temple's first route. Created on demand so a new temple can send without setup. */
@@ -24,10 +26,15 @@ export async function startRound(u: DecodedIdToken): Promise<Result<{ id: string
   const db = adminDb();
   const routeId = await defaultRouteId(u.temple_id);
 
-  // Close any round left open on this route before starting a new one.
-  const open = await db.collection(ROUNDS).where("route_id", "==", routeId).where("status", "==", "active").get();
+  // Self-cleaning without a scheduler: any round start closes this route's open round
+  // and every stale round in the system (rounds someone forgot to end).
+  const cutoff = Date.now() - STALE_MS;
+  const open = await db.collection(ROUNDS).where("status", "==", "active").get();
   const batch = db.batch();
-  open.docs.forEach((d) => batch.update(d.ref, endFields()));
+  open.docs
+    .filter((d) => d.get("route_id") === routeId || lastSeen(d) < cutoff)
+    .slice(0, 499) // ponytail: one batch; fine while active rounds are few
+    .forEach((d) => batch.update(d.ref, endFields()));
   const ref = db.collection(ROUNDS).doc();
   batch.create(ref, {
     route_id: routeId,
@@ -62,20 +69,4 @@ export async function endRound(u: DecodedIdToken, roundId: string): Promise<Resu
   const ref = await ownActiveRound(u, roundId);
   if (ref) await ref.update(endFields());
   return { ok: true }; // already ended is fine
-}
-
-/** Daily cron: close rounds nobody ended. */
-export async function closeStaleRounds(): Promise<number> {
-  const db = adminDb();
-  const cutoff = Date.now() - STALE_MS;
-  const active = await db.collection(ROUNDS).where("status", "==", "active").get();
-  const stale = active.docs.filter((d) => {
-    const t = (d.get("last_updated_at") ?? d.get("started_at")) as Timestamp | undefined;
-    return !t || t.toMillis() < cutoff;
-  });
-  // ponytail: single batch caps at 500 rounds per run; chunk if that ever happens.
-  const batch = db.batch();
-  stale.slice(0, 500).forEach((d) => batch.update(d.ref, endFields()));
-  await batch.commit();
-  return stale.length;
 }
