@@ -137,7 +137,7 @@ export function SenderPanel() {
         <>
           <p className="live-banner" role="status">
             <span className="live-dot" /> กำลังส่งพิกัด
-            {lastSent && ` · ล่าสุด ${lastSent.toLocaleTimeString("th-TH")}`}
+            {lastSent && ` · ล่าสุด ${lastSent.toLocaleTimeString("th-TH", { hourCycle: "h23", timeZone: "Asia/Bangkok" })}`}
           </p>
           <p>เปิดหน้านี้ค้างไว้ตลอดทาง ห้ามปิดหน้าจอ</p>
           <button className="btn btn-danger btn-xl" onClick={end} disabled={busy}>

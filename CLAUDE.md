@@ -29,6 +29,9 @@ Phase 1 deploy แล้ว ที่ https://wat--watweb-33601.asia-southeast1.
   ไม่ใช้ VAPID key ของเราเอง (SDK ใช้ key กลางของ Firebase) และ service worker ไม่โหลด Firebase SDK
   ส่ง FCM แบบ data message `{title, body, url, tag}` แล้ว SW แสดงเอง
 - ไอคอนอยู่ใน `public/` ไม่ใช่ `app/icon.svg` เพราะไฟล์ไอคอนใน app/ ทำให้ `next dev` reload วน (Next 16.4)
+  `next dev` ยังอาจ reload วนช่วงแรกตอนเปิด route ที่ยังไม่เคย compile แล้วหยุดเอง ไม่เกิดใน production build
+- เวลาใช้รูปแบบ 24 ชม. เสมอ: ช่องเลือกเวลาเป็น select ชั่วโมง/นาที (ไม่ใช้ `<input type="time">` ซึ่งขึ้น AM/PM ตามภาษาเครื่อง)
+  และแสดงเวลาด้วย `hourCycle: "h23"`, `timeZone: "Asia/Bangkok"`
 - ทดสอบ push อัตโนมัติด้วย Chrome ที่ Playwright สั่งไม่ได้ (subscribe ค้าง) ต้องทดสอบบนมือถือจริง
 - Phase 3: `src/modules/alms/notify.ts` เก็บรายการบ้านต่อสายใน memory 60 วินาที เพื่อไม่ให้อ่าน Firestore ทุกครั้งที่ส่งพิกัด
   การทดสอบที่ส่ง push ให้ใช้ "วัดทดสอบของ Claude" เสมอ วัดนิคมกิตติยารามมีอุปกรณ์จริงของเจ้าของลงทะเบียนอยู่

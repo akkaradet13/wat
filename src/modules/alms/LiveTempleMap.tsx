@@ -4,7 +4,7 @@ import { MapView, type MapPin } from "@/modules/core/map";
 import type { LatLng } from "@/modules/core/temples/types";
 import { useActiveRounds } from "./useActiveRounds";
 
-const timeTh = (ms: number) => new Date(ms).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+const timeTh = (ms: number) => new Date(ms).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Asia/Bangkok" });
 
 /** Status banner + map for a temple profile. Shows monks only while their round is active. */
 export function LiveTempleMap({ templeId, templeName, location }: { templeId: string; templeName: string; location: LatLng }) {

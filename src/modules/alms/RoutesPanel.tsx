@@ -4,6 +4,32 @@ import { useState } from "react";
 import { authFetch } from "@/modules/core/auth/client";
 import { useRoutes } from "./useRoutes";
 
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0"));
+
+/** 24-hour time picker. `<input type="time">` follows the device locale and may show AM/PM. */
+function TimeSelect({ name, defaultValue }: { name: string; defaultValue: string }) {
+  const [h, m] = defaultValue.split(":");
+  const [time, setTime] = useState({ h, m: MINUTES.includes(m) ? m : "00" });
+  return (
+    <span className="choices" style={{ alignItems: "center" }}>
+      <select aria-label="ชั่วโมง" value={time.h} onChange={(e) => setTime({ ...time, h: e.target.value })}>
+        {HOURS.map((v) => (
+          <option key={v}>{v}</option>
+        ))}
+      </select>
+      :
+      <select aria-label="นาที" value={time.m} onChange={(e) => setTime({ ...time, m: e.target.value })}>
+        {MINUTES.map((v) => (
+          <option key={v}>{v}</option>
+        ))}
+      </select>
+      น.
+      <input type="hidden" name={name} value={`${time.h}:${time.m}`} />
+    </span>
+  );
+}
+
 /** Temple admin: add, rename, retime and delete alms routes. */
 export function RoutesPanel({ templeId }: { templeId: string }) {
   const routes = useRoutes(templeId);
@@ -39,7 +65,7 @@ export function RoutesPanel({ templeId }: { templeId: string }) {
           </label>
           <label>
             เวลาออก
-            <input name="start_time" type="time" defaultValue={r.start_time} required />
+            <TimeSelect name="start_time" defaultValue={r.start_time} />
           </label>
           <div className="choices">
             <button className="btn" disabled={busy}>
@@ -77,7 +103,7 @@ export function RoutesPanel({ templeId }: { templeId: string }) {
         </label>
         <label>
           เวลาออก
-          <input name="start_time" type="time" defaultValue="06:00" required />
+          <TimeSelect name="start_time" defaultValue="06:00" />
         </label>
         <button className="btn" disabled={busy}>
           เพิ่มสาย
