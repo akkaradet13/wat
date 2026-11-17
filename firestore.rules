@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// All writes go through Next.js Route Handlers using firebase-admin, which bypasses these rules.
+// Clients only read. Authorization logic lives in one place: src/app/api/**.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /temples/{id} { allow read: if true; }
+    match /alms_routes/{id} { allow read: if true; }
+    // Ended rounds have last_position deleted, so only active rounds expose a location.
+    match /alms_rounds/{id} { allow read: if true; }
+    match /users/{uid} { allow read: if request.auth != null && request.auth.uid == uid; }
+  }
+}
