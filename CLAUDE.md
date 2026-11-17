@@ -9,7 +9,8 @@
 - โดเมนยังไม่ได้เลือก ให้ถามเจ้าของก่อนตั้งค่า `metadataBase`, canonical และ sitemap
 
 ไฟล์นี้สรุปบริบทและข้อตกลงของโปรเจกต์ เพื่อให้ Claude Code ทำงานต่อได้โดยไม่ต้องถามซ้ำ
-สถานะปัจจุบัน (2026-11-17): **Phase 2 เสร็จ** (PWA, ปักหมุดบ้าน, เปิดแจ้งเตือน, หน้าสอน iPhone) ถัดไป Phase 3
+สถานะปัจจุบัน (2026-11-17): **Phase 3 เสร็จ** (แจ้งเตือนเมื่อพระเข้ารัศมีบ้าน ครั้งเดียวต่อรอบ) ถัดไป Phase 4
+Phase 2 เสร็จ (PWA, ปักหมุดบ้าน, เปิดแจ้งเตือน, หน้าสอน iPhone)
 Phase 1 deploy แล้ว ที่ https://wat--watweb-33601.asia-southeast1.hosted.app
 (project `watweb-33601` เป็น dev มีข้อมูลทดสอบ) ทดสอบ flow ครบผ่าน Chrome แล้ว
 ถัดไป: ทดสอบเดินจริงบนมือถือ (GPS, Wake Lock) แล้วจึงเริ่ม Phase 2
@@ -27,6 +28,8 @@ Phase 1 deploy แล้ว ที่ https://wat--watweb-33601.asia-southeast1.
   ส่ง FCM แบบ data message `{title, body, url, tag}` แล้ว SW แสดงเอง
 - ไอคอนอยู่ใน `public/` ไม่ใช่ `app/icon.svg` เพราะไฟล์ไอคอนใน app/ ทำให้ `next dev` reload วน (Next 16.4)
 - ทดสอบ push อัตโนมัติด้วย Chrome ที่ Playwright สั่งไม่ได้ (subscribe ค้าง) ต้องทดสอบบนมือถือจริง
+- Phase 3: `src/modules/alms/notify.ts` เก็บรายการบ้านต่อสายใน memory 60 วินาที เพื่อไม่ให้อ่าน Firestore ทุกครั้งที่ส่งพิกัด
+  การทดสอบที่ส่ง push ให้ใช้ "วัดทดสอบของ Claude" เสมอ วัดนิคมกิตติยารามมีอุปกรณ์จริงของเจ้าของลงทะเบียนอยู่
 - ยังไม่ทำหน้ารวมตามพื้นที่ ทำเมื่อมีวัดในระบบจำนวนหนึ่งแล้ว
 - เอกสาร Next.js ตรงตามเวอร์ชันที่ติดตั้งอยู่ที่ `node_modules/next/dist/docs/` ให้อ่านจากที่นี่ก่อนเขียนโค้ด
 
@@ -233,11 +236,12 @@ households       บ้านญาติโยม (alms_households, 1 เคร
   fcm_token      string
   updated_at     timestamp
 
-notifications    บันทึกการแจ้งเตือน (กันแจ้งซ้ำ)
-  id             PK
+notifications    บันทึกการแจ้งเตือน (กันแจ้งซ้ำ, alms_notifications)
+  id             PK = {round_id}_{household_id}  สร้างด้วย create() ซึ่งล้มถ้ามีอยู่แล้ว จึงแจ้งได้ครั้งเดียว
   round_id       FK -> rounds
   household_id   FK -> households
   sent_at        timestamp
+  expire_at      timestamp     TTL 30 วัน (fieldOverrides ใน firestore.indexes.json)
 
 announcements    ประกาศจากวัด
   id             PK

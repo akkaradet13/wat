@@ -6,3 +6,4 @@ export const SEND_INTERVAL_MS = 15 * 1000;
 export const ROUTES = "alms_routes";
 export const ROUNDS = "alms_rounds";
 export const HOUSEHOLDS = "alms_households";
+export const NOTIFICATIONS = "alms_notifications";
