@@ -14,7 +14,9 @@ function parseRoute(b: Record<string, unknown>) {
   const start_time = str(b.start_time, 5);
   if (!name) return { error: "กรุณาตั้งชื่อสาย" };
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(start_time)) return { error: "เวลาออกไม่ถูกต้อง" };
-  return { data: { name, start_time } };
+  // Who walks this route, shown on the live map, e.g. "หลวงพ่อทองอินทร์, พระสมชาย".
+  const monks = str(b.monks, 120);
+  return { data: { name, start_time, monks } };
 }
 
 export async function createRoute(templeId: string, b: Record<string, unknown>): Promise<Result<{ id: string }>> {

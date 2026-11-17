@@ -1,7 +1,7 @@
 import type { DecodedIdToken } from "firebase-admin/auth";
 import { FieldValue, GeoPoint, type DocumentSnapshot, type Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/modules/core/firebase/admin";
-import { ROUNDS, STALE_MS } from "./constants";
+import { ROUNDS, ROUTES, STALE_MS } from "./constants";
 import { pickRoute } from "./households";
 import { notifyNearby } from "./notify";
 
@@ -29,8 +29,12 @@ export async function startRound(u: DecodedIdToken, requestedRoute?: unknown): P
     .slice(0, 499) // ponytail: one batch; fine while active rounds are few
     .forEach((d) => batch.update(d.ref, endFields()));
   const ref = db.collection(ROUNDS).doc();
+  const route = await db.collection(ROUTES).doc(routeId).get();
   batch.create(ref, {
     route_id: routeId,
+    // Copied so the live map gets names from the one round doc it already listens to.
+    route_name: route.get("name") ?? "",
+    monks: route.get("monks") ?? "",
     temple_id: u.temple_id,
     sender_id: u.uid,
     date: bangkokDate(),
@@ -57,7 +61,7 @@ export async function updateLocation(u: DecodedIdToken, roundId: string, lat: nu
   await round.ref.update({ last_position: new GeoPoint(lat, lng), last_updated_at: FieldValue.serverTimestamp() });
   // Alerts must never break location sending.
   await notifyNearby(
-    { id: round.id, route_id: round.get("route_id"), temple_id: round.get("temple_id") },
+    { id: round.id, route_id: round.get("route_id"), temple_id: round.get("temple_id"), monks: round.get("monks") ?? "" },
     { lat, lng },
   ).catch((e) => console.error("notifyNearby", e));
   return { ok: true };

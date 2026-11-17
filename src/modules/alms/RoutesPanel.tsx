@@ -45,7 +45,7 @@ export function RoutesPanel({ templeId }: { templeId: string }) {
     return ok;
   }
 
-  const fields = (f: FormData) => ({ name: f.get("name"), start_time: f.get("start_time") });
+  const fields = (f: FormData) => ({ name: f.get("name"), start_time: f.get("start_time"), monks: f.get("monks") });
 
   return (
     <div className="stack">
@@ -66,6 +66,10 @@ export function RoutesPanel({ templeId }: { templeId: string }) {
           <label>
             เวลาออก
             <TimeSelect name="start_time" defaultValue={r.start_time} />
+          </label>
+          <label>
+            พระที่ออกบิณฑบาตสายนี้ (แสดงบนแผนที่)
+            <input name="monks" defaultValue={r.monks} maxLength={120} placeholder="เช่น หลวงพ่อทองอินทร์" />
           </label>
           <div className="choices">
             <button className="btn" disabled={busy}>
@@ -104,6 +108,10 @@ export function RoutesPanel({ templeId }: { templeId: string }) {
         <label>
           เวลาออก
           <TimeSelect name="start_time" defaultValue="06:00" />
+        </label>
+        <label>
+          พระที่ออกบิณฑบาตสายนี้ (แสดงบนแผนที่)
+          <input name="monks" maxLength={120} placeholder="เช่น หลวงพ่อทองอินทร์" />
         </label>
         <button className="btn" disabled={busy}>
           เพิ่มสาย

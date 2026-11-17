@@ -208,7 +208,8 @@ routes           สายบิณฑบาต
   id             PK
   temple_id      FK -> temples
   name           string
-  start_time     string        เช่น "05:45"
+  start_time     string        เช่น "05:45" (24 ชม.)
+  monks          string        ชื่อพระที่ออกสายนี้ แสดงบนแผนที่และในแจ้งเตือน เช่น "หลวงพ่อทองอินทร์"
 
 users            ผู้ใช้ระบบ (ผู้ส่งพิกัด, แอดมิน)
   id             PK (= Firebase Auth uid)
@@ -219,6 +220,8 @@ users            ผู้ใช้ระบบ (ผู้ส่งพิกั�
 rounds           รอบบิณฑบาตของแต่ละวัน
   id             PK
   route_id       FK -> routes
+  route_name     string        คัดลอกจาก route ตอนเริ่มรอบ (แผนที่ฟังเอกสารเดียวก็ได้ชื่อ ไม่ต้องอ่านเพิ่ม)
+  monks          string        คัดลอกจาก route ตอนเริ่มรอบ
   temple_id      FK -> temples  เก็บซ้ำจาก route เพื่อให้ rules เช็กสิทธิ์ได้โดยไม่ต้องอ่าน routes เพิ่ม
   sender_id      FK -> users
   date           string        "YYYY-MM-DD" ตามเวลาไทย
