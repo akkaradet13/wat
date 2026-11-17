@@ -10,6 +10,7 @@ import type { LatLng } from "@/modules/core/temples/types";
 import { HOUSEHOLDS } from "./constants";
 import { IosInstallGuide } from "./IosInstallGuide";
 import { getPushToken, pushSupport } from "./push";
+import { useRoutes } from "./useRoutes";
 
 type Phase = "loading" | "off" | "setup" | "on" | "ios-install" | "unsupported" | "denied";
 const RADII = [200, 300, 500];
@@ -20,6 +21,8 @@ export function HomeAlert({ templeId, templeName, location }: { templeId: string
   const [otherTemple, setOtherTemple] = useState(false);
   const [pin, setPin] = useState<LatLng | null>(null);
   const [radius, setRadius] = useState(300);
+  const routes = useRoutes(templeId);
+  const [routeId, setRouteId] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const enabling = useRef(false);
@@ -36,6 +39,7 @@ export function HomeAlert({ templeId, templeName, location }: { templeId: string
           const p = snap.get("position");
           setPin({ lat: p.latitude, lng: p.longitude });
           setRadius(snap.get("radius_m"));
+          setRouteId(snap.get("route_id"));
           setPhase("on");
         } else {
           setOtherTemple(!!snap?.exists());
@@ -77,6 +81,7 @@ export function HomeAlert({ templeId, templeName, location }: { templeId: string
         lat: pin.lat,
         lng: pin.lng,
         radius_m: radius,
+        route_id: routeId || routes?.[0]?.id,
         fcm_token: await getPushToken(),
       });
       if (!ok) return setMessage(data.error || "เปิดแจ้งเตือนไม่สำเร็จ");
@@ -136,6 +141,18 @@ export function HomeAlert({ templeId, templeName, location }: { templeId: string
             📍 ใช้ตำแหน่งปัจจุบัน
           </button>
           <MapView center={pin ?? location} pins={pins} onPick={setPin} />
+          {routes && routes.length > 1 && (
+            <label>
+              สายบิณฑบาตที่ผ่านหน้าบ้าน
+              <select value={routeId || routes[0].id} onChange={(e) => setRouteId(e.target.value)}>
+                {routes.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name} ({r.start_time} น.)
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <p>
             <strong>2. แจ้งเตือนเมื่อพระอยู่ห่างบ้าน</strong>
           </p>
@@ -163,7 +180,9 @@ export function HomeAlert({ templeId, templeName, location }: { templeId: string
 
       {phase === "on" && (
         <>
-          <p className="live-banner">🔔 เปิดแจ้งเตือนแล้ว จะแจ้งเมื่อพระอยู่ห่างบ้านไม่เกิน {radius} เมตร</p>
+          <p className="live-banner">🔔 เปิดแจ้งเตือนแล้ว จะแจ้งเมื่อพระอยู่ห่างบ้านไม่เกิน {radius} เมตร
+            {routes && routes.length > 1 && ` (${routes.find((r) => r.id === routeId)?.name ?? ""})`}
+          </p>
           <div className="choices">
             <button className="btn btn-secondary" onClick={sendTest}>
               ส่งแจ้งเตือนทดสอบ

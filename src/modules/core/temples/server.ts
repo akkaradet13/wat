@@ -96,3 +96,13 @@ export async function setTempleStatus(id: string, status: TempleStatus, by: stri
   });
   return snap.get("slug") as string;
 }
+
+/** Temple admin edit. The slug never changes here, so shared links and search results keep working. */
+export async function updateTemple(id: string, input: TempleInput): Promise<string | null> {
+  const ref = temples().doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) return null;
+  const { location, ...rest } = input;
+  await ref.update({ ...rest, location: new GeoPoint(location.lat, location.lng), updated_at: FieldValue.serverTimestamp() });
+  return snap.get("slug") as string;
+}

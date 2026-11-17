@@ -2,7 +2,7 @@ import type { DecodedIdToken } from "firebase-admin/auth";
 import { FieldValue, GeoPoint, type DocumentSnapshot, type Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/modules/core/firebase/admin";
 import { ROUNDS, STALE_MS } from "./constants";
-import { defaultRouteId } from "./households";
+import { pickRoute } from "./households";
 import { notifyNearby } from "./notify";
 
 // Server only. Every function takes the verified token and checks it belongs to the temple.
@@ -14,10 +14,10 @@ const lastSeen = (d: DocumentSnapshot) =>
   ((d.get("last_updated_at") ?? d.get("started_at")) as Timestamp | undefined)?.toMillis() ?? 0;
 const endFields = () => ({ status: "ended", ended_at: FieldValue.serverTimestamp(), last_position: FieldValue.delete() });
 
-export async function startRound(u: DecodedIdToken): Promise<Result<{ id: string }>> {
+export async function startRound(u: DecodedIdToken, requestedRoute?: unknown): Promise<Result<{ id: string }>> {
   if (!canSend(u)) return { ok: false, status: 403, error: "บัญชีนี้ไม่มีสิทธิ์ส่งพิกัด" };
   const db = adminDb();
-  const routeId = await defaultRouteId(u.temple_id);
+  const routeId = await pickRoute(u.temple_id, requestedRoute);
 
   // Self-cleaning without a scheduler: any round start closes this route's open round
   // and every stale round in the system (rounds someone forgot to end).

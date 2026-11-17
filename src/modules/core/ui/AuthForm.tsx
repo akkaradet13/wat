@@ -1,8 +1,8 @@
 "use client";
 
 import { FirebaseError } from "firebase/app";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import { useState } from "react";
+import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
+import { useRef, useState } from "react";
 import { clientAuth } from "../firebase/client";
 
 const ERRORS: Record<string, string> = {
@@ -17,6 +17,23 @@ export function AuthForm({ allowSignup = false }: { allowSignup?: boolean }) {
   const [signup, setSignup] = useState(allowSignup);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [info, setInfo] = useState("");
+  const emailRef = useRef<HTMLInputElement>(null);
+
+  async function resetPassword() {
+    const email = emailRef.current?.value.trim();
+    setError("");
+    if (!email) return setError("กรอกอีเมลก่อน แล้วกด \"ลืมรหัสผ่าน?\" อีกครั้ง");
+    const auth = clientAuth();
+    auth.languageCode = "th";
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (err) {
+      if (err instanceof FirebaseError && err.code === "auth/invalid-email") return setError(ERRORS[err.code]);
+      // Other errors (e.g. unknown email) get the same reply so accounts can't be probed.
+    }
+    setInfo(`ถ้ามีบัญชีของ ${email} จะได้รับอีเมลสำหรับตั้งรหัสผ่านใหม่ (ดูในกล่องจดหมายขยะด้วย)`);
+  }
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -39,7 +56,7 @@ export function AuthForm({ allowSignup = false }: { allowSignup?: boolean }) {
       <h2>{signup ? "สร้างบัญชี" : "เข้าสู่ระบบ"}</h2>
       <label>
         อีเมล
-        <input name="email" type="email" autoComplete="email" required />
+        <input ref={emailRef} name="email" type="email" autoComplete="email" required />
       </label>
       <label>
         รหัสผ่าน
@@ -52,9 +69,15 @@ export function AuthForm({ allowSignup = false }: { allowSignup?: boolean }) {
         />
       </label>
       {error && <p className="error">{error}</p>}
+      {info && <p className="muted">{info}</p>}
       <button className="btn" disabled={busy}>
         {busy ? "กำลังดำเนินการ…" : signup ? "สร้างบัญชี" : "เข้าสู่ระบบ"}
       </button>
+      {!signup && (
+        <button type="button" className="link" onClick={resetPassword}>
+          ลืมรหัสผ่าน?
+        </button>
+      )}
       {allowSignup && (
         <button type="button" className="link" onClick={() => setSignup(!signup)}>
           {signup ? "มีบัญชีแล้ว? เข้าสู่ระบบ" : "ยังไม่มีบัญชี? สร้างบัญชี"}

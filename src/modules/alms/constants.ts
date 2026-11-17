@@ -7,3 +7,4 @@ export const ROUTES = "alms_routes";
 export const ROUNDS = "alms_rounds";
 export const HOUSEHOLDS = "alms_households";
 export const NOTIFICATIONS = "alms_notifications";
+export const ANNOUNCEMENTS = "alms_announcements";

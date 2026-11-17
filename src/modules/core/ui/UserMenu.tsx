@@ -31,6 +31,7 @@ export function UserMenu() {
       </span>
       <span className="user-menu-actions">
         {claims.super_admin && <Link href="/admin">ยืนยันวัด</Link>}
+        {claims.role === "admin" && <Link href="/manage">จัดการวัด</Link>}
         {claims.temple_id && <Link href="/alms/send">ส่งพิกัด</Link>}
         <button className="link" onClick={signOut}>
           ออกจากระบบ

@@ -19,6 +19,18 @@ export async function defaultRouteId(templeId: string): Promise<string> {
   return (await routes.add({ temple_id: templeId, name: "สายหลัก", start_time: "06:00" })).id;
 }
 
+/** Route doc if it belongs to the temple. */
+export async function templeRoute(templeId: string, routeId: unknown) {
+  if (typeof routeId !== "string" || !routeId) return null;
+  const snap = await adminDb().collection(ROUTES).doc(routeId).get();
+  return snap.exists && snap.get("temple_id") === templeId ? snap : null;
+}
+
+/** Requested route if it belongs to the temple, else the temple's first route. */
+export async function pickRoute(templeId: string, routeId: unknown): Promise<string> {
+  return (await templeRoute(templeId, routeId))?.id ?? defaultRouteId(templeId);
+}
+
 export async function saveHousehold(
   uid: string,
   b: Record<string, unknown>,
@@ -39,7 +51,7 @@ export async function saveHousehold(
 
   await col().doc(uid).set({
     temple_id: templeId,
-    route_id: await defaultRouteId(templeId),
+    route_id: await pickRoute(templeId, b.route_id),
     position: new GeoPoint(lat, lng),
     radius_m: radius,
     fcm_token: token,

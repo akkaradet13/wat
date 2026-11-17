@@ -6,22 +6,26 @@ import { useActiveRounds } from "./useActiveRounds";
 
 const timeTh = (ms: number) => new Date(ms).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 
-/** Status banner + map for a temple profile. Shows the monk only while a round is active. */
+/** Status banner + map for a temple profile. Shows monks only while their round is active. */
 export function LiveTempleMap({ templeId, templeName, location }: { templeId: string; templeName: string; location: LatLng }) {
-  const live = useActiveRounds(templeId).find((r) => r.position);
-  const pins: MapPin[] = [{ kind: "temple", pos: location, label: templeName }];
-  if (live?.position) pins.push({ kind: "monk", pos: live.position, label: "พระอยู่ที่นี่" });
+  const live = useActiveRounds(templeId).filter((r) => r.position);
+  const latest = live.reduce<(typeof live)[number] | undefined>((a, r) => (!a || r.updatedAt > a.updatedAt ? r : a), undefined);
+  const pins: MapPin[] = [
+    { kind: "temple", pos: location, label: templeName },
+    ...live.map((r): MapPin => ({ kind: "monk", pos: r.position!, label: "พระอยู่ที่นี่" })),
+  ];
 
   return (
     <section className="stack" aria-live="polite">
-      {live ? (
+      {latest ? (
         <p className="live-banner">
-          <span className="live-dot" /> กำลังออกบิณฑบาต · อัปเดต {timeTh(live.updatedAt)} น.
+          <span className="live-dot" /> กำลังออกบิณฑบาต{live.length > 1 && ` ${live.length} สาย`} · อัปเดต {timeTh(latest.updatedAt)} น.
         </p>
       ) : (
         <p className="idle-banner">ขณะนี้ไม่ได้ออกบิณฑบาต</p>
       )}
-      <MapView center={live?.position ?? location} pins={pins} follow={live?.position ?? undefined} />
+      {/* Follow only when one monk is out; with several, keep the view stable. */}
+      <MapView center={latest?.position ?? location} pins={pins} follow={live.length === 1 ? latest?.position ?? undefined : undefined} />
     </section>
   );
 }

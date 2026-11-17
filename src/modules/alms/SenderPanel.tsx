@@ -6,6 +6,7 @@ import { authFetch, useUser } from "@/modules/core/auth/client";
 import { clientAuth } from "@/modules/core/firebase/client";
 import { AuthForm } from "@/modules/core/ui/AuthForm";
 import { SEND_INTERVAL_MS } from "./constants";
+import { useRoutes } from "./useRoutes";
 
 const KEY = "alms_round_id";
 const store = {
@@ -41,6 +42,8 @@ export function SenderPanel() {
   const latest = useRef<GeolocationPosition | null>(null);
 
   const canSend = !!user && !!claims.temple_id;
+  const routes = useRoutes(claims.temple_id);
+  const [routeId, setRouteId] = useState("");
   useEffect(() => {
     if (!roundId || !canSend) return;
     let wakeLock: WakeLockSentinel | null = null;
@@ -98,7 +101,7 @@ export function SenderPanel() {
 
   async function start() {
     setBusy(true);
-    const { ok, data } = await authFetch<{ id: string }>("/api/alms/rounds");
+    const { ok, data } = await authFetch<{ id: string }>("/api/alms/rounds", { route_id: routeId || routes?.[0]?.id });
     setBusy(false);
     if (!ok || !data.id) return setMessage(data.error || "เริ่มรอบไม่สำเร็จ");
     store.set(data.id);
@@ -146,6 +149,18 @@ export function SenderPanel() {
           <p className="idle-banner" role="status">
             หยุดส่งแล้ว
           </p>
+          {routes && routes.length > 1 && (
+            <label>
+              สายที่จะเดิน
+              <select value={routeId || routes[0].id} onChange={(e) => setRouteId(e.target.value)}>
+                {routes.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name} ({r.start_time} น.)
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <button className="btn btn-xl" onClick={start} disabled={busy}>
             เริ่มรอบบิณฑบาต
           </button>

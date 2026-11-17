@@ -51,7 +51,7 @@ export default function LeafletMap({ center, pins, zoom = 16, onPick, follow }: 
       />
       {pins.map((p, i) => (
         <Marker
-          key={p.kind}
+          key={`${p.kind}-${i}`}
           position={[p.pos.lat, p.pos.lng]}
           icon={icons[p.kind]}
           draggable={!!onPick && i === 0}

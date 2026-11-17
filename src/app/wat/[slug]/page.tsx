@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { AnnouncementBanner } from "@/modules/alms/announcements";
 import { HomeAlert } from "@/modules/alms/HomeAlert";
 import { LiveTempleMap } from "@/modules/alms/LiveTempleMap";
 import { getTempleBySlug } from "@/modules/core/temples/server";
@@ -90,6 +91,7 @@ export default async function TemplePage({ params }: PageProps<"/wat/[slug]">) {
       </p>
 
       {/* Live tracking first: it is what people come here for every morning. */}
+      <AnnouncementBanner templeId={t.id} />
       <LiveTempleMap templeId={t.id} templeName={t.name} location={t.location} />
       <HomeAlert templeId={t.id} templeName={t.name} location={t.location} />
 
