@@ -10,7 +10,9 @@ import { SECTS, TEMPLE_TYPES } from "@/modules/core/temples/types";
 import { TempleStatusBadge } from "@/modules/core/ui/TempleStatusBadge";
 
 // ISR: rendered on first visit, then cached. Status changes call revalidatePath.
-export const revalidate = 3600;
+// 60 s: the App Hosting CDN honours s-maxage and revalidatePath does not purge it, so this bounds
+// how long a suspended/edited temple can still show (plus expireTime in next.config.ts).
+export const revalidate = 60;
 export const generateStaticParams = async () => [];
 
 const decode = (s: string) => {

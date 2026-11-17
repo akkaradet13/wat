@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { listTemples } from "@/modules/core/temples/server";
 
-export const revalidate = 3600;
+export const revalidate = 60; // see src/app/page.tsx
 
 const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 

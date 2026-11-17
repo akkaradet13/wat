@@ -3,7 +3,9 @@ import { LiveNowList } from "@/modules/alms/LiveNowList";
 import { listTemples } from "@/modules/core/temples/server";
 import { TempleStatusBadge } from "@/modules/core/ui/TempleStatusBadge";
 
-export const revalidate = 600;
+// 60 s: the App Hosting CDN honours s-maxage and revalidatePath does not purge it, so this bounds
+// how long a suspended/edited temple can still show (plus expireTime in next.config.ts).
+export const revalidate = 60;
 
 export default async function Home() {
   const temples = await listTemples();
